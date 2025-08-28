@@ -19,13 +19,9 @@ venv/
 install/
 log/
 
-# PyTorch model files (large files)
+# PyTorch model files (large files, keep trained models local)
 *.pth
 *.pt
-
-# Dataset files (usually large)
-dataset/
-data/
 
 # IDE and editor files
 .vscode/
@@ -47,6 +43,8 @@ Thumbs.db
 *.log
 tmp/
 temp/
+
+# Note: dataset/ is now included for training data
 
 # uv specific files
 uv.lock
