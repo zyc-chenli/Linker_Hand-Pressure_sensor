@@ -1,0 +1,52 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+*.py[cod]
+*$py.class
+
+# Build artifacts
+build/
+dist/
+wheels/
+*.egg-info
+*.egg
+
+# Virtual environments (uv and others)
+.venv/
+venv/
+
+# ROS2 specific build artifacts
+install/
+log/
+
+# PyTorch model files (large files)
+*.pth
+*.pt
+
+# Dataset files (usually large)
+dataset/
+data/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# uv specific files
+uv.lock

@@ -1,0 +1,53 @@
+# Core Python packages
+pip>=25.1.1
+
+# Computer Vision and Image Processing
+opencv-python>=4.5.0
+numpy>=1.21.0
+
+# Machine Learning and Deep Learning
+torch>=1.11.0
+torchvision>=0.12.0
+scikit-learn>=1.0.0
+
+# Data visualization and plotting
+matplotlib>=3.5.0
+
+# Serial communication
+pyserial>=3.5
+
+# GUI frameworks (for LinkerHand GUI components)
+PyQt5>=5.15.0
+pyqtgraph>=0.12.0
+
+# YAML processing
+PyYAML>=6.0
+
+# Development and testing tools
+pytest>=7.0.0
+
+# Additional dependencies for specific functionality
+rospkg>=1.4.0  # For ROS package management utilities (legacy ROS1, but still used in some components)
+
+# LinkerHand ROS2 SDK Dependencies
+python-can>=4.0.0         # CAN bus communication
+dm_env>=1.5                # DeepMind environment interface
+pexpect>=4.8.0             # Spawn child applications and control them
+pyquaternion>=0.9.9        # Quaternion operations
+pyagxrobots>=0.1.0         # AGX robotics library
+pycryptodome>=3.15.0       # Cryptographic library
+ipython>=8.0.0             # Interactive Python shell
+esdk-obs-python>=3.21.8    # Huawei OBS SDK
+h5py>=3.7.0                # HDF5 for Python
+tqdm>=4.64.0               # Progress bars
+wandb>=0.13.0              # Weights & Biases for ML tracking
+pybullet>=3.2.5            # Physics simulation
+mediapipe>=0.9.0           # Google MediaPipe
+dm_control>=1.0.8          # DeepMind control suite
+uvicorn>=0.20.0            # ASGI web server
+sapien>=2.2.0              # Physics and rendering engine
+mujoco>=2.3.0              # MuJoCo physics engine
+
+# Note: ROS2 packages (rclpy, sensor_msgs, std_msgs, cv_bridge, etc.) 
+# are installed via system package manager and should already be available
+# on systems with ROS2 Humble or Jazzy installed.
