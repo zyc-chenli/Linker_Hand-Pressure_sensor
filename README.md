@@ -1,155 +1,137 @@
-# LinkerHand ROS2 Project
+# Tactile Digit Recognition & Dexterous Hand Control
 
-The LinkerHand ROS2 SDK supports Ubuntu 22.04+ with ROS2 Humble/Jazzy and Python 3.10+.
+**ROS 2 · PyTorch · 5 × 5 pressure sensing · Linker Hand**
 
-**Current Environment:** Ubuntu 24.04 LTS + ROS2 Jazzy
+A sensor-to-action prototype developed during my summer research at **HKUST (Guangzhou), 2025**. A pressure array captures tactile input, a CNN recognizes the digit pattern, and a ROS 2 controller commands the corresponding robotic-hand pose.
 
+**[Watch the physical demo →](https://zyc-chenli.github.io/projects/tactile-hand.html)** · [Research portfolio](https://zyc-chenli.github.io)
 
-## Before you start, please create the uv environment and install all the independencies.
+<a href="https://zyc-chenli.github.io/projects/tactile-hand.html"><img src="https://zyc-chenli.github.io/assets/media/tactile-digit-demo.jpg" width="250" alt="A 5 by 5 tactile sensor pad beside the Linker robotic hand during a physical demonstration"></a>
 
-### First choice, I recommend you to create the uv environment
+## What I built
+
+- **Acquisition:** ROS 2 serial acquisition and pressure-image visualization for a 25-channel sensor array.
+- **Recognition:** data collection and a PyTorch CNN that classifies accumulated pressure patterns.
+- **Action:** a gesture-control node that maps recognized digits to preset poses using the Linker Hand SDK.
+
+The physical demonstration shows the full pipeline. It is not an accuracy or latency benchmark.
+
+## Pipeline
+
+```mermaid
+flowchart LR
+    A[5 × 5 pressure array] --> B[Serial acquisition]
+    B --> C[ROS 2 pressure image]
+    C --> D[Stroke aggregation + CNN]
+    D --> E[Recognized digit]
+    E --> F[Preset gesture controller]
+    F --> G[Linker Hand SDK + CAN]
+```
+
+| Component | Interface / implementation |
+| --- | --- |
+| Sensor acquisition | Serial, 115200 baud; default `/dev/ttyUSB0` |
+| Raw pressure images | `/fsr_array/raw_pressure_image` |
+| Pressure visualization | `/fsr_array/pressure_heatmap` |
+| CNN | Two convolutional layers, a small fully connected head and dropout |
+| Recognition output | `/fsr_array/recognized_digit` (`std_msgs/Int32`) |
+| Hand commands | `/cb_right_hand_control_cmd` (`sensor_msgs/JointState`) |
+
+The model has ten output logits (0–9), while the checked-in dataset and physical gesture map cover **digits 1–9**. Digit 0 has no preset hand pose in the current controller.
+
+## Setup
+
+**Development environment:** Ubuntu 24.04 LTS, ROS 2 Jazzy, Python 3.12. ROS 2, `colcon`, serial access and a suitable CAN adapter are prerequisites. This is a hardware project; it does not run as a standalone web demo.
+
+### 1. Get the workspace and device SDK
+
 ```bash
-########### Step 1: Install uv (if not already installed)   ##############
+git clone https://github.com/zyc-chenli/Linker_Hand-Pressure_sensor.git hand_ws
+cd hand_ws
 
-curl -LsSf https://astral.sh/uv/install.sh | sh
-# or
-pip install uv
+# The recorded SDK directory is a Git link without .gitmodules.
+# Obtain the device driver separately in a fresh clone:
+git clone https://github.com/linkerbotai/linker_hand_ros2_sdk.git src/linker_hand_ros2_sdk
+```
 
-########### Step 2: Create and setup virtual environment   ###############
+Follow the [vendor SDK instructions](https://github.com/linkerbotai/linker_hand_ros2_sdk) for device dependencies and hand configuration. The workspace references the SDK but does not bundle its full source.
 
-# Create uv virtual environment
-uv venv
+### 2. Prepare Python and build
 
-# Activate the virtual environment
-source .venv/bin/activate
+Use the system Python version associated with ROS 2. Access to system packages is needed for `rclpy` and the ROS message bindings.
 
-# Install all dependencies
-uv pip install -r requirements.txt
-
-########## Step 3: Source ROS2 environment #############################
-# For ROS2 Jazzy (Ubuntu 24.04)
+```bash
 source /opt/ros/jazzy/setup.bash
+python3 -m venv --system-site-packages .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 
-# For ROS2 Humble (Ubuntu 22.04)
-source /opt/ros/humble/setup.bash
+colcon build --symlink-install --packages-select fsr_array_publisher
+source install/setup.bash
 ```
 
-### Second choice, you can have a try to use conda environment
-```bash
- 创建conda环境
-conda create -n hand_ws python=3.10 -y
+Build the vendor SDK according to its own instructions before starting the hand driver. The optional `finger_sensor_publisher` package is separate from the 5 × 5 pad recognition pipeline.
 
-# 激活环境
-conda activate hand_ws
+### 3. Collect data and train
 
-# 安装依赖
-pip install -r requirements.txt
-
-# 激活ROS2环境
-source /opt/ros/jazzy/setup.bash  # 或者 humble
-```
-
-
-
-## After prepare the environment, the following is writed by myself  !!!!!!!!!!!!!!!!!!!!!!
-```bash
-# First you need source the enervirment 
-
-$ source .venv/bin/activate
-$ source install/setup.bash
-
-# To view all the dependencies in the environment 
-$ uv pip list 
-
-
-# Initialize the linker_hand, you can refer to the github Website: https://github.com/linkerbotai/linker_hand_ros2_sdk .
-
-
-$ sudo /usr/sbin/ip link set can0 up type can bitrate 1000000 #USB转CAN设备蓝色灯常亮状态
-$ ros2 launch linker_hand.launch.py（启动灵巧手）
-$ ros2 launch gui_control gui_control.launch.py  （用来启动UI页面，可以滑动来控制灵巧手的自由度）
-
-# Pressure_senser Initialize + collect data + recognize digit
-$ colcon build --packages-select fsr_array_publisher
-```
-
-Ps: 这边有一个bug，每次colon build之后，你需要把install/fsr_array_publisher/lib/fsr_array_publisher/digit_recognizer.py文件中开头
-#!/usr/bin/python3
-替换成 
-#!/home/zyc/Desktop/hand_ws/.venv/bin/python3
-不然启动digit_recognizer节点会报错，当时这个问题没办法解决，因为用的uv的虚拟环境。
-
-### The solution to solve it
+The checked-in `dataset/` contains **481 pressure images across digits 1–9**. Use your own sensor captures and a held-out evaluation for new hardware. The dataset is small and does not establish cross-user performance.
 
 ```bash
-方法1：手动修改
-# 每次 colcon build 后
-nano install/fsr_array_publisher/lib/fsr_array_publisher/digit_recognizer
-# 将第一行 #!/usr/bin/python3 
-# 改为 #!/home/zyc/Desktop/hand_ws/.venv/bin/python3
+# In separate terminals, after sourcing ROS and the workspace:
+ros2 run fsr_array_publisher fsr_publisher --ros-args -p serial_port:=/dev/ttyUSB0
+ros2 run fsr_array_publisher data_collector --ros-args -p start_threshold:=15.0
 
-方法2：使用自动脚本
-
-#我在写README.md的时候，ai帮我写了一个fix_shebang_auto.sh的脚本来自动在colon build之后修复这个问题，不知道有没有用
-chmod +x fix_shebang_auto.sh (可能只要配置一次就好了)
-
-# 构建项目
-colcon build --packages-select fsr_array_publisher
-
-# 自动修复shebang
-./fix_shebang_auto.sh
-
-# 检查shebang行
-head -n 1 install/fsr_array_publisher/lib/fsr_array_publisher/digit_recognizer
-
-# 应该显示：#!/home/zyc/Desktop/hand_ws/.venv/bin/python3 (或您的虚拟环境路径)
+# Train with the environment's Python:
+python train_model_pytorch.py
+cp fsr_digit_classifier.pth src/fsr_array_publisher/resource/
+colcon build --symlink-install --packages-select fsr_array_publisher
 ```
 
+No trained checkpoint is bundled. The collector prompts for the target digit; capture multiple examples for each class. The training script uses a stratified 80/20 train–validation split and writes `fsr_digit_classifier.pth`.
 
+### 4. Run the physical pipeline
 
-### train and run the project
+Set up `can0` and the serial device according to your hardware configuration. The original bench setup used a CAN bitrate of 1,000,000 bit/s.
 
 ```bash
-对5*5压力传感器
-$ ros2 run fsr_array_publisher fsr_publisher （启动）
-$ ros2 run fsr_array_publisher data_collector --ros-args -p start_threshold:=15.0   （数据收集）
-$ ros2 run fsr_array_publisher digit_recognizer --ros-args -p start_threshold:=20.0   （数字识别检测）
+# One command per terminal; source ROS, .venv and install/setup.bash first.
+ros2 launch linker_hand_ros2_sdk linker_hand.launch.py
+ros2 run fsr_array_publisher fsr_publisher
 
+# Explicitly use the environment Python for PyTorch inference:
+python install/fsr_array_publisher/lib/fsr_array_publisher/digit_recognizer
 
-# The script to train data
-
-$ python3 train_model_pytorch.py
-$ mv ~/Desktop/hand_ws/fsr_digit_classifier.pth ~/Desktop/hand_ws/src/fsr_array_publisher/resource/
-
-# How to run it.
-
-同时启动4个节点
-启动灵巧手驱动 (linker_hand.launch.py)。
-启动我们的FSR传感器驱动 (fsr_publisher)。
-启动AI识别节点 (digit_recognizer)。
-启动手势控制器 (gesture_controller)。
-
-$ ros2 launch linker_hand_ros2_sdk linker_hand.launch.py
-$ ros2 run fsr_array_publisher fsr_publisher
-$ ros2 run fsr_array_publisher digit_recognizer
-$ ros2 run fsr_array_publisher gesture_controller
-
-=》 ros2 launch fsr_array_publisher hardware_drivers.launch.py （驱动）
-=》 ros2 launch fsr_array_publisher application_logic.launch.py （操作）
-
+ros2 run fsr_array_publisher gesture_controller
 ```
 
+For the combined launch files:
 
-
-## 🗂️ Project Structure
-
+```bash
+ros2 launch fsr_array_publisher hardware_drivers.launch.py
+ros2 launch fsr_array_publisher application_logic.launch.py
 ```
-hand_ws/
-├── src/                    # ROS2 packages source code
-├── dataset/               # Training data (not pushed to git)
-├── requirements.txt       # Python dependencies  
-├── setup.sh              # Automated setup script
-├── fix_shebang.sh        # Fix virtual environment issues
-├── train_model_pytorch.py # Neural network training script
-└── README.md             # This file
+
+**Local configuration:** `application_logic.launch.py` currently contains a workstation-specific virtual-environment Python path. Change `venv_python_path` to your own path before using that launcher, or use the explicit-Python command above. Generated ROS entry-point shebangs must also point to an interpreter with the required packages; the old `fix_shebang_auto.sh` is a local helper, not a portable setup guarantee.
+
+### Calibration and gesture mapping
+
+- Adjust `serial_port`, `baseline_adc_value`, `max_pressure_adc_value` and `deadzone_offset` in the acquisition node for your sensor.
+- Tune the collector and recognizer `start_threshold` values to your sensor noise floor; the examples are not universal calibration values.
+- Verify the hand side, joint order and vendor command range before reusing the presets in `gesture_controller_node.py`. The current mapping uses ten position values in the range 0–255.
+
+## Repository layout
+
+```text
+src/fsr_array_publisher/       # Acquisition, collection, inference and gesture nodes
+src/finger_sensor_publisher/  # Optional finger-pressure visualization package
+src/linker_hand_ros2_sdk      # Recorded external SDK Git link
+dataset/                     # Small pressure-image dataset, digits 1–9
+train_model_pytorch.py        # CNN definition and training loop
+requirements.txt             # Python dependency list
 ```
+
+`main.py` and `setup.sh` are placeholders; the ROS 2 nodes are the application entry points. This repository provides the research prototype, not a fully packaged hardware-independent product.
+
+## Attribution
+
+The hand platform and device driver are provided by [LinkerBot](https://github.com/linkerbotai/linker_hand_ros2_sdk). My contribution is the tactile acquisition, learning and application-control pipeline. The project page includes the original bench demonstration and further context.

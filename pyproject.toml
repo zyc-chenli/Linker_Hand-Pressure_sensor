@@ -1,7 +1,7 @@
 [project]
 name = "hand-ws"
 version = "0.1.0"
-description = "Add your description here"
+description = "ROS 2 tactile digit recognition and gesture control for a Linker robotic hand"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
