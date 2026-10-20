@@ -2,7 +2,7 @@
 
 **ROS 2 · PyTorch · 5 × 5 pressure sensing · Linker Hand**
 
-A sensor-to-action prototype developed during my summer research at **HKUST (Guangzhou), 2025**. A pressure array captures tactile input, a CNN recognizes the digit pattern, and a ROS 2 controller commands the corresponding robotic-hand pose.
+A sensor-to-action prototype developed during my summer research at **HKUST (Guangzhou), June–September 2025, supervised by Yiding Ji**. A pressure array captures tactile input, a CNN recognizes the digit pattern, and a ROS 2 controller commands the corresponding robotic-hand pose.
 
 **[Watch the physical demo →](https://zyc-chenli.github.io/projects/tactile-hand.html)** · [Research portfolio](https://zyc-chenli.github.io)
 
@@ -15,6 +15,8 @@ A sensor-to-action prototype developed during my summer research at **HKUST (Gua
 - **Action:** a gesture-control node that maps recognized digits to preset poses using the Linker Hand SDK.
 
 The physical demonstration shows the full pipeline. It is not an accuracy or latency benchmark.
+
+The research placement also included Unitree G1 locomotion simulation in Isaac Lab. The [portfolio overview](https://zyc-chenli.github.io/projects/tactile-hand.html#humanoid) describes that component; this repository contains the tactile acquisition, recognition and hand-control pipeline.
 
 ## Pipeline
 
